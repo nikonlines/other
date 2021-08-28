@@ -15,6 +15,9 @@ VPN_PASSWORD="**********"           #Пароль pptp
 
 VPN_NETWORK="10.0.0.0/24"           #IP-адрес и маска сети PPTP-соединения для маршрутизации
 
+VPN_FROM_INTERFACE="eth0"           #Интерфейс для подключения к VPN-серверу
+ROUTE_METRIC="1"                    #Метрика маршрута к VPN-серверу
+
 #===================================
 
 FILE_DIR="/etc/ppp/peers/$VPN_NAME"
@@ -121,5 +124,25 @@ fi
 
 chmod +x $FILE_DIR
 
+#======== Дополнительный скрипт для маршрутизации подключения к VPN-сервеу =======
 
+FILE_DIR="route_vpn_server.sh"
 
+if [ -f $FILE_DIR ]; then
+    echo "The $FILE_DIR file exists, create $FILE_DIR.bak file"
+    cp $FILE_DIR $FILE_DIR".bak"
+fi
+
+{
+    echo "#!/bin/bash"
+    echo ""
+    echo "VPN_SERVER_IP=\"$VPN_SERVER_IP\""
+    echo "VPN_FROM_INTERFACE=\"$VPN_FROM_INTERFACE\""
+    echo "ROUTE_METRIC=\"$ROUTE_METRIC\""
+    echo ""
+    echo "route del \${VPN_SERVER_IP}"
+    echo ""
+    echo "route add -host \${VPN_SERVER_IP} metric \${ROUTE_METRIC} dev \${VPN_FROM_INTERFACE}"
+} > $FILE_DIR
+
+chmod +x $FILE_DIR
